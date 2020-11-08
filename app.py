@@ -53,7 +53,7 @@ def precipitation():
     # Create the session (link) from Python to the DB
     session = Session(engine)
 
-    precipitation_inf = session.query(Measurement.date, Measurement.prcp)
+    precipitation_inf = session.query(Measurement.date, Measurement.prcp).filte(Measurement.date >='2016-08-23')
 
     session.close()
 
@@ -84,6 +84,20 @@ def stations():
 
 @app.route("/api/v1.0/tobs")
 def tobs():
+    # Create the session (link) from Python to the DB
+    session = Session(engine)
+
+    tobs_query = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >='2016-08-23').filter(Measurement.station == 'USC00519281').all()
+
+    session.close
+    
+    # Create at list for the temperatures of last year
+    
+    tobs_list = [tob[1] for tob in tobs_query]
+
+    return jsonify(tobs_list)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 
