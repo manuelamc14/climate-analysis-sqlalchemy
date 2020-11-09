@@ -53,7 +53,7 @@ def precipitation():
     # Create the session (link) from Python to the DB
     session = Session(engine)
 
-    precipitation_inf = session.query(Measurement.date, Measurement.prcp).filte(Measurement.date >='2016-08-23')
+    precipitation_inf = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >='2016-08-23')
 
     session.close()
 
@@ -97,7 +97,56 @@ def tobs():
 
     return jsonify(tobs_list)
 
+@app.route("/api/v1.0/<start>")
+def start_date(start):
 
+    # Create the session (link) from Python to the DB
+    session = Session(engine)
+    
+    sel_sd = [func.max(Measurement.tobs), func.min(Measurement.tobs), func.avg(Measurement.tobs)]
+    
+    start_date_query = session.query(*sel_sd).filter(Measurement.date >=start).all()
+
+    session.close
+
+    # Create a dictionary from the row data and append to a list of precipitation_list
+    
+    start_date_list = []
+    for max_temp, min_temp, avg_temp in start_date_query:
+        start_date_dict = {}
+        start_date_dict["max_temp"]= max_temp
+        start_date_dict["min_temp"]= min_temp
+        start_date_dict["avg_temp"]= avg_temp  
+        start_date_list.append(start_date_dict)
+
+
+    return jsonify(start_date_list)
+
+@app.route("/api/v1.0/<start>/<end>")
+def start_end_date(start, end):
+    
+    # Create the session (link) from Python to the DB
+    session = Session(engine)
+    
+    sel_sd = [func.max(Measurement.tobs), func.min(Measurement.tobs), func.avg(Measurement.tobs)]
+    
+    start_date_query = session.query(*sel_sd).filter(Measurement.date >=start).filter(Measurement.date <= end).all()
+
+    session.close
+
+    # Create a dictionary from the row data and append to a list of precipitation_list
+    
+    start_date_list = []
+    for max_temp, min_temp, avg_temp in start_date_query:
+        start_date_dict = {}
+        start_date_dict["max_temp"]= max_temp
+        start_date_dict["min_temp"]= min_temp
+        start_date_dict["avg_temp"]= avg_temp  
+        start_date_list.append(start_date_dict)
+
+
+    return jsonify(start_date_list)
+        
 if __name__ == '__main__':
     app.run(debug=True)
 
