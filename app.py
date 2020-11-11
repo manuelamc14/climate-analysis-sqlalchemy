@@ -12,6 +12,7 @@ from flask import Flask, jsonify
 #################################################
 # Database Setup
 #################################################
+
 engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 
 # reflect an existing database into a new model
@@ -20,7 +21,6 @@ Base = automap_base()
 Base.prepare(engine, reflect=True)
 
 # Save reference to the table
-print(Base.classes.keys())
 
 Measurement = Base.classes.measurement
 Station = Base.classes.station
@@ -28,6 +28,7 @@ Station = Base.classes.station
 #################################################
 # Flask Setup
 #################################################
+
 app = Flask(__name__)
 
 #################################################
@@ -35,6 +36,9 @@ app = Flask(__name__)
 #################################################
 
 @app.route("/")
+
+#List all routes that are available
+
 def welcome(): 
     """List all availabe api routes"""
     return (
@@ -48,6 +52,9 @@ def welcome():
     )
 
 @app.route("/api/v1.0/precipitation")
+
+# List of the precipatitation values for the last year of the datebase
+
 def precipitation():
 
     # Create the session (link) from Python to the DB
@@ -68,6 +75,9 @@ def precipitation():
     return jsonify(precipitation_list)
 
 @app.route("/api/v1.0/stations")
+
+# List of all the stations from the datebase
+
 def stations():
     # Create the session (link) from Python to the DB
     session = Session(engine)
@@ -83,6 +93,9 @@ def stations():
     return jsonify(stations_list)
 
 @app.route("/api/v1.0/tobs")
+
+# List of the dates and temperature observations of the most active station for the last year of data
+
 def tobs():
     # Create the session (link) from Python to the DB
     session = Session(engine)
@@ -93,16 +106,28 @@ def tobs():
     
     # Create at list for the temperatures of last year
     
-    tobs_list = [tob[1] for tob in tobs_query]
+    tobs_list = []
+
+    for date, tobs in tobs_query:
+        tobs_dict = {}
+        tobs_dict["date"] = date
+        tobs_dict["temperature"] = tobs
+        tobs_list.append(tobs_dict)
 
     return jsonify(tobs_list)
 
 @app.route("/api/v1.0/<start>")
+
+# List of the minimum temperature, the average temperature, and the max temperature for all dates 
+# greater than and equal to the given date (start)
+
 def start_date(start):
 
     # Create the session (link) from Python to the DB
     session = Session(engine)
     
+    dates = session.query(Measurement.date).all()
+
     sel_sd = [func.max(Measurement.tobs), func.min(Measurement.tobs), func.avg(Measurement.tobs)]
     
     start_date_query = session.query(*sel_sd).filter(Measurement.date >=start).all()
@@ -118,11 +143,17 @@ def start_date(start):
         start_date_dict["min_temp"]= min_temp
         start_date_dict["avg_temp"]= avg_temp  
         start_date_list.append(start_date_dict)
-
-
-    return jsonify(start_date_list)
+        
+        if (any(start) in i for i in dates):
+            return jsonify(start_date_list)
+    else:
+        return jsonify({"error": "Character not found."}), 404
 
 @app.route("/api/v1.0/<start>/<end>")
+
+# List of the minimum temperature, the average temperature, and the max temperature for all
+# dates between the start and end date inclusive.
+
 def start_end_date(start, end):
     
     # Create the session (link) from Python to the DB
@@ -136,16 +167,16 @@ def start_end_date(start, end):
 
     # Create a dictionary from the row data and append to a list of precipitation_list
     
-    start_date_list = []
+    start_end_list = []
     for max_temp, min_temp, avg_temp in start_date_query:
-        start_date_dict = {}
-        start_date_dict["max_temp"]= max_temp
-        start_date_dict["min_temp"]= min_temp
-        start_date_dict["avg_temp"]= avg_temp  
-        start_date_list.append(start_date_dict)
+        start_end_dict = {}
+        start_end_dict["max_temp"]= max_temp
+        start_end_dict["min_temp"]= min_temp
+        start_end_dict["avg_temp"]= avg_temp  
+        start_end_list.append(start_end_dict)
 
-
-    return jsonify(start_date_list)
+    
+    return jsonify(start_end_list)
         
 if __name__ == '__main__':
     app.run(debug=True)
