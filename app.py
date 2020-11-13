@@ -144,11 +144,9 @@ def start_date(start):
         start_date_dict["avg_temp"]= avg_temp  
         start_date_list.append(start_date_dict)
         
-        if (any(start) in i for i in dates):
-            return jsonify(start_date_list)
-    else:
-        return jsonify({"error": "Character not found."}), 404
-
+        return jsonify(start_date_list)
+    
+       
 @app.route("/api/v1.0/<start>/<end>")
 
 # List of the minimum temperature, the average temperature, and the max temperature for all
